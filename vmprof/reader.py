@@ -27,6 +27,7 @@ VERSION_MEMORY = 3
 VERSION_MODE_AWARE = 4
 VERSION_DURATION = 5
 VERSION_TIMESTAMP = 6
+VERSION_TIMERS_FRAME_ID = 7
 
 PROFILE_MEMORY = 1
 PROFILE_LINES = 2
@@ -267,8 +268,8 @@ class LogReader(object):
                 s.start_time = self.read_time_and_zone()
             elif marker == MARKER_STACKTRACE:
                 count = self.read_word()
-                # for now
-                assert count == 1
+                if s.version < VERSION_TIMERS_FRAME_ID:
+                    assert count == 1
                 depth = self.read_word()
                 assert depth <= 2**16, 'stack strace depth too high'
                 trace = self.read_trace(depth)
@@ -279,7 +280,7 @@ class LogReader(object):
                 if s.profile_memory:
                     mem_in_kb = self.read_addr()
                 trace.reverse()
-                self.add_trace(trace, 1, thread_id, mem_in_kb)
+                self.add_trace(trace, count, thread_id, mem_in_kb)
             elif marker == MARKER_VIRTUAL_IP or marker == MARKER_NATIVE_SYMBOLS:
                 unique_id = self.read_addr()
                 name = self.read_string()

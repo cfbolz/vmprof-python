@@ -90,8 +90,14 @@ int _vmprof_sample_stack(struct profbuf_s *p, PY_THREAD_STATE_T * tstate, uconte
 {
     int depth;
     struct prof_stacktrace_s *st = (struct prof_stacktrace_s *)p->data;
+    struct timespec currtime;
     st->marker = MARKER_STACKTRACE;
-    st->count = 1;
+    if (clock_gettime(CLOCK_MONOTONIC, &currtime) == -1) {
+        st->count = -1;
+    } else {
+        // save as ns, XXX what to do in 32bit?
+        st->count = currtime.tv_sec * 1000000000 + currtime.tv_nsec;
+    }
 #ifdef RPYTHON_VMPROF
     depth = get_stack_trace(get_vmprof_stack(), st->stack, MAX_STACK_DEPTH-1, (intptr_t)GetPC(uc));
 #else

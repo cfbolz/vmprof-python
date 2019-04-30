@@ -44,6 +44,10 @@ def read_profile(prof_file):
 
     jit_frames = {}
     d = dict(state.virtual_ips)
+    from vmprof.test.test_flamechart import coalesce, export_json
+    output = coalesce(state.profiles, 0.00099 * 1000, 0.00099 / 200 * 1000)
+    o = [(d[a], start, stop) for (a, start, stop) in output]
+    export_json(o, "out.json")
     s = Stats(state.profiles, d, jit_frames, interp=state.interp_name,
               start_time=state.start_time, end_time=state.end_time,
               meta=state.meta, state=state)
