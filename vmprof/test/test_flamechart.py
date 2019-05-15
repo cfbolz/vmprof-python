@@ -51,7 +51,7 @@ def coalesce(profiles, factor=1, skew=0):
     output.sort(key=lambda x: (x[1], x[1] - x[2], x[0]))
     return output
 
-def export_json(log, profiles, fn):
+def export_json(log, state, fn):
     import json
     # example events:
     # { "pid":1, "tid":1, "ts":87705, "dur":956189, "ph":"X", "name":"Jambase", "args":{ "ms":956.2 } },
@@ -65,9 +65,14 @@ def export_json(log, profiles, fn):
         events.append(dict(ph="X", pid=1, tid=1, ts=start, dur=stop-start, name=event[0], args={"extra": "nope"}))
     # instant events (all the samples):
     # {"name": "OutOfMemory", "ph": "i", "ts": 1234523.3, "pid": 2343, "tid": 2347, "s": "g"}
-    s = profiles[0][1]
-    for p in profiles:
-        events.append(dict(ph="i", pid=1, tid="sample", ts=(p[1] - s) * 0.001, name="sample"))
+    s = state.profiles[0][1]
+    for p in state.profiles:
+        ts = (p[1] - s) * 0.001
+        events.append(dict(ph="i", pid=1, tid="sample", ts=ts, name="sample"))
+        # show memory
+        # {..., "name": "ctr", "ph": "C", "ts":  0, "args": {"cats":  0}},
+        if state.profile_memory:
+            events.append(dict(ph="C", pid=1, name="memory", ts=(p[1] - s) * 0.001, args=dict(memory=p[-1])))
     with open(fn, "w") as f:
         json.dump(result, f)
 

@@ -47,7 +47,7 @@ def read_profile(prof_file):
     from vmprof.test.test_flamechart import coalesce, export_json
     output = coalesce(state.profiles, factor=0.001, skew=1)
     o = [(d[a], start, stop) for (a, start, stop) in output]
-    export_json(o, state.profiles, "out.json")
+    export_json(o, state, "out.json")
 
     s = Stats(state.profiles, d, jit_frames, interp=state.interp_name,
               start_time=state.start_time, end_time=state.end_time,
