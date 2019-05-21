@@ -208,7 +208,7 @@ def test_multithreaded():
             t.join()
 
     stats = prof.get_stats()
-    all_ids = set([x[2] for x in stats.profiles])
+    all_ids = set([x.threadid for x in stats.profiles])
     if sys.platform == 'darwin':
         # on travis CI, these mac builds sometimes fail because of scheduling
         # issues. Having only 1 thread id is legit, which means that

@@ -53,7 +53,7 @@ def test_old_version_before_timer():
     path = py.path.local(__file__).join('..', 'python2-version-timestamp')
     stats = vmprof.read_profile(str(path))
     for stat in stats.profiles:
-        assert stat[1] == -1.0
+        assert stat.timestamp == -1.0
 
 def test_smoke_timestamp():
     # smoke test for most current version
@@ -61,6 +61,6 @@ def test_smoke_timestamp():
     stats = vmprof.read_profile(str(path))
     prev = 0
     for stat in stats.profiles:
-        assert stat[1] >= prev
-        prev = stat[1]
+        assert stat.timestamp >= prev
+        prev = stat.timestamp
 

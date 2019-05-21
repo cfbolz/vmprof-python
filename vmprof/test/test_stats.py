@@ -6,17 +6,18 @@ import six
 
 import vmprof
 from vmprof.stats import Node, Stats, JittedCode, AssemblerCode
+from vmprof.reader import StackSample
 
 def test_tree_basic():
-    profiles = [([1, 2], 1, 1),
-                ([1, 2], 1, 1)]
+    profiles = [StackSample([1, 2], 1, 1),
+                StackSample([1, 2], 1, 1)]
     stats = Stats(profiles, adr_dict={1: 'foo', 2: 'bar'})
     tree = stats.get_tree()
     assert tree == Node(1, 'foo', 2, {2: Node(2, 'bar', 2)})
     assert repr(tree) == '<Node: foo (2) [(2, bar)]>'
 
-    profiles = [([1, 2], 1, 1),
-                ([1, 3], 1, 1)]
+    profiles = [StackSample([1, 2], 1, 1),
+                StackSample([1, 3], 1, 1)]
     stats = Stats(profiles, adr_dict={1: 'foo', 2: 'bar', 3: 'baz'})
     tree = stats.get_tree()
     assert tree == Node(1, 'foo', 2, {
@@ -24,8 +25,8 @@ def test_tree_basic():
         3: Node(3, 'baz', 1)})
 
 def test_tree_jit():
-    profiles = [([1], 1, 1),
-                ([1, AssemblerCode(100), JittedCode(1)], 1, 1)]
+    profiles = [StackSample([1], 1, 1),
+                StackSample([1, AssemblerCode(100), JittedCode(1)], 1, 1)]
     stats = Stats(profiles, adr_dict={1: 'foo'})
     tree = stats.get_tree()
     assert tree == Node(1, 'foo', 2)

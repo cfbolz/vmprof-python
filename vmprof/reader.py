@@ -310,7 +310,7 @@ class LogReader(object):
         self.state.virtual_ips.append((unique_id, name))
 
     def add_trace(self, trace, trace_timestamp, thread_id, mem_in_kb):
-        self.state.profiles.append((trace, trace_timestamp, thread_id, mem_in_kb))
+        self.state.profiles.append(StackSample(trace, trace_timestamp, thread_id, mem_in_kb))
 
 class LogReaderDumpNative(LogReader):
     def setup(self):
@@ -405,3 +405,13 @@ class FdWrapper(object):
 
     def tell(self):
         return os.lseek(self.fd, 0, os.SEEK_CUR)
+
+
+class StackSample(object):
+    """ Thin class that stores a single stack sample. The stack entries have
+    not been resolved. """
+    def __init__(self, stack, timestamp, threadid, mem_in_kb=-1):
+        self.stack = stack
+        self.timestamp = timestamp
+        self.threadid = threadid
+        self.mem_in_kb = mem_in_kb

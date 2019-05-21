@@ -4,6 +4,7 @@ from vmprof.reader import AssemblerCode, JittedCode, NativeCode
 class EmptyProfileFile(Exception):
     pass
 
+
 class Stats(object):
     def __init__(self, profiles, adr_dict=None, jit_frames=None, interp=None,
                  meta=None, start_time=None, end_time=None, state=None):
@@ -61,13 +62,13 @@ class Stats(object):
         return self.meta.get(key, default) 
 
     def display(self, no):
-        prof = self.profiles[no][0]
+        prof = self.profiles[no].stack
         return [self._get_name(elem) for elem in prof]
 
     def generate_top(self):
         for profile in self.profiles:
             current_iter = {}
-            for i, addr in enumerate(profile[0]):
+            for i, addr in enumerate(profile.stack):
                 if self.profile_lines and i % 2 == 1:
                     # this entry in the profile is a negative number indicating a line
                     assert addr <= 0
@@ -94,7 +95,7 @@ class Stats(object):
         for profile in self.profiles:
             current_iter = {}  # don't count twice
             counting = False
-            for addr in profile[0]:
+            for addr in profile.stack:
                 if counting:
                     if addr in current_iter:
                         continue
@@ -109,11 +110,11 @@ class Stats(object):
 
     def get_top(self, profiles):
         for prof in profiles:
-            if prof[0]:
+            if prof.stack:
                 break
         else:
             raise EmptyProfileFile()
-        top_addr = prof[0][0]
+        top_addr = prof.stack[0]
         top = Node(top_addr, self._get_name(top_addr))
         top.count = len(self.profiles)
         return top
@@ -126,10 +127,10 @@ class Stats(object):
         for profile in self.profiles:
             last_addr = top.addr
             cur = top
-            for i in range(0, len(profile[0])):
-                if isinstance(profile[0][i], AssemblerCode):
+            for i in range(0, len(profile.stack)):
+                if isinstance(profile.stack[i], AssemblerCode):
                     continue # just ignore it for now
-                addr = profile[0][i]
+                addr = profile.stack[i]
 
                 if addr <= 0:
                     # negative address means line number
