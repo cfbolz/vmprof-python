@@ -1,4 +1,4 @@
-
+import vmprof
 import struct, py
 from vmprof import reader
 from vmprof.reader import (FileReadError, MARKER_HEADER)
@@ -49,10 +49,18 @@ def test_fileobj_wrapper():
     assert fw.read(2) == b'89'
 
 def test_old_version_before_timer():
-    import vmprof
     # smoke test, should have been done with all prior versions, I think
     path = py.path.local(__file__).join('..', 'python2-version-timestamp')
     stats = vmprof.read_profile(str(path))
     for stat in stats.profiles:
         assert stat[1] == -1.0
+
+def test_smoke_timestamp():
+    # smoke test for most current version
+    path = py.path.local(__file__).join('..', 'python2-version-timers')
+    stats = vmprof.read_profile(str(path))
+    prev = 0
+    for stat in stats.profiles:
+        assert stat[1] >= prev
+        prev = stat[1]
 
