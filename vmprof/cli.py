@@ -76,6 +76,11 @@ def build_argparser():
         type=argparse.FileType('w+b'),
         help='Save profiling data to file'
     )
+    output_mode_args.add_argument(
+        '--chrome-tracing',
+        metavar='file.json',
+        help='Save profiling data in a format compatible to chrome://tracing to a file'
+    )
 
     return parser
 

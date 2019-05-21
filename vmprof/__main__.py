@@ -4,6 +4,8 @@ import sys, os
 import tempfile
 import vmprof
 from vmshare.service import Service
+from vmprof.flamechart import write_chrome_tracing_file
+
 try:
     import _jitlog
 except ImportError:
@@ -12,10 +14,14 @@ except ImportError:
 OUTPUT_CLI = 'cli'
 OUTPUT_WEB = 'web'
 OUTPUT_FILE = 'file'
+OUTPUT_CHROME = 'chrome'
 
 def show_stats(filename, output_mode, args):
     if output_mode == OUTPUT_FILE:
         return
+    elif output_mode == OUTPUT_CHROME:
+        stats = vmprof.read_profile(filename)
+        write_chrome_tracing_file(stats, args.chrome_tracing)
     elif output_mode == OUTPUT_CLI:
         stats = vmprof.read_profile(filename)
         vmprof.cli.show(stats)
@@ -38,6 +44,8 @@ def main():
         output_mode = OUTPUT_WEB
     elif args.output:
         output_mode = OUTPUT_FILE
+    elif args.chrome_tracing:
+        output_mode = OUTPUT_CHROME
     else:
         output_mode = OUTPUT_CLI
 
