@@ -48,3 +48,11 @@ def test_fileobj_wrapper():
     assert fw.read(4) == b'4567'
     assert fw.read(2) == b'89'
 
+def test_old_version_before_timer():
+    import vmprof
+    # smoke test, should have been done with all prior versions, I think
+    path = py.path.local(__file__).join('..', 'python2-version-timestamp')
+    stats = vmprof.read_profile(str(path))
+    for stat in stats.profiles:
+        assert stat[1] == -1.0
+
