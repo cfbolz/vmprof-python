@@ -71,7 +71,8 @@ typedef struct prof_stacktrace_s {
     char padding[sizeof(long) - 1];
 #endif
     char marker;
-    long count, depth;
+    double tt;
+    long depth;
     void *stack[];
 } prof_stacktrace_s;
 
