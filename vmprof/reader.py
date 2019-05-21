@@ -27,7 +27,7 @@ VERSION_MEMORY = 3
 VERSION_MODE_AWARE = 4
 VERSION_DURATION = 5
 VERSION_TIMESTAMP = 6
-VERSION_TIMERS_FRAME_ID = 7
+VERSION_TIMERS = 7
 
 PROFILE_MEMORY = 1
 PROFILE_LINES = 2
@@ -192,6 +192,9 @@ class LogReader(object):
         else:
             raise NotImplementedError("did not implement size %d" % self.size)
 
+    def read_double(self):
+        return struct.unpack('<d', self.fileobj.read(8))[0]
+
     def read(self, count):
         return self.fileobj.read(count)
 
@@ -267,9 +270,12 @@ class LogReader(object):
             elif marker == MARKER_TIME_N_ZONE:
                 s.start_time = self.read_time_and_zone()
             elif marker == MARKER_STACKTRACE:
-                count = self.read_word()
-                if s.version < VERSION_TIMERS_FRAME_ID:
+                if s.version < VERSION_TIMERS:
+                    count = self.read_word()
                     assert count == 1
+                    timestamp = -1.0
+                else:
+                    timestamp = self.read_double()
                 depth = self.read_word()
                 assert depth <= 2**16, 'stack strace depth too high'
                 trace = self.read_trace(depth)
@@ -280,7 +286,7 @@ class LogReader(object):
                 if s.profile_memory:
                     mem_in_kb = self.read_addr()
                 trace.reverse()
-                self.add_trace(trace, count, thread_id, mem_in_kb)
+                self.add_trace(trace, timestamp, thread_id, mem_in_kb)
             elif marker == MARKER_VIRTUAL_IP or marker == MARKER_NATIVE_SYMBOLS:
                 unique_id = self.read_addr()
                 name = self.read_string()
@@ -303,8 +309,8 @@ class LogReader(object):
     def add_virtual_ip(self, marker, unique_id, name):
         self.state.virtual_ips.append((unique_id, name))
 
-    def add_trace(self, trace, trace_count, thread_id, mem_in_kb):
-        self.state.profiles.append((trace, trace_count, thread_id, mem_in_kb))
+    def add_trace(self, trace, trace_timestamp, thread_id, mem_in_kb):
+        self.state.profiles.append((trace, trace_timestamp, thread_id, mem_in_kb))
 
 class LogReaderDumpNative(LogReader):
     def setup(self):
@@ -347,7 +353,7 @@ class LogReaderDumpNative(LogReader):
     def add_virtual_ip(self, marker, unique_id, name):
         pass # do nothing, no need to save this data
 
-    def add_trace(self, trace, trace_count, thread_id, mem_in_kb):
+    def add_trace(self, trace, trace_timestamp, thread_id, mem_in_kb):
         for addr in trace:
             if addr not in self.dedup:
                 self.dedup.add(addr)
