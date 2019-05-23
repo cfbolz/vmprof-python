@@ -415,3 +415,7 @@ class StackSample(object):
         self.timestamp = timestamp
         self.threadid = threadid
         self.mem_in_kb = mem_in_kb
+
+    def __repr__(self):
+        return "StackSample(%s, %s, %s, %s)" % (
+            self.stack, self.timestamp, self.threadid, self.mem_in_kb)

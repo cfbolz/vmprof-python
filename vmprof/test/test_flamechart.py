@@ -1,5 +1,6 @@
 import pytest
 from vmprof.flamechart import coalesce, write_chrome_tracing_file
+from vmprof.flamechart import separate_threads
 from vmprof.reader import StackSample
 
 def test_coalesce():
@@ -69,6 +70,15 @@ def test_skew():
     r = coalesce(profiles, skew=1)
     assert r == [(1, 0, 301), (2, 50, 300), (3, 51, 200), (4, 52, 199)]
 
+def test_threads():
+    profiles = [StackSample([1, 2], 1, 1),
+                StackSample([1, 2], 2, 1),
+                StackSample([1, 2], 0, 2),
+                StackSample([1, 3], 2, 2)]
+    d = separate_threads(profiles)
+    assert d[1] == profiles[:2]
+    assert d[2] == profiles[2:]
+
 def test_smoke():
     import py
     import vmprof
@@ -78,4 +88,5 @@ def test_smoke():
     stats = vmprof.read_profile(str(path))
     jsonfile = tempfile.NamedTemporaryFile(delete=False)
     write_chrome_tracing_file(stats, jsonfile.name)
-    d = json.load(jsonfile.name) # check that it's valid json
+    with open(jsonfile.name) as f:
+        d = json.load(f) # check that it's valid json

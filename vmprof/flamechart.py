@@ -59,7 +59,7 @@ def coalesce(profiles, factor=1, skew=0):
     output.sort(key=lambda x: (x[1], x[1] - x[2], x[0]))
     return output
 
-def export_json(log, state, fn):
+def export_json(thread_to_chart, state, fn):
     """ Create a chrome-tracing-compatible json file """
     import json
     # 1. produce trace events for all the reconstructed stack functions
@@ -69,10 +69,11 @@ def export_json(log, state, fn):
     # { "pid":1, "tid":1, "ts":546867, "dur":121564, "ph":"X", "name":"DoThings", "args":{ "ms":121.6 } }
     events = []
     result = {"traceEvents": events, "meta_user": "pypy"}
-    for event in log:
-        start = event[1]
-        stop = event[2]
-        events.append(dict(ph="X", pid=1, tid=1, ts=start, dur=stop-start, name=event[0], args={"extra": "nope"}))
+    for thread_id, log in thread_to_chart.items():
+        for event in log:
+            start = event[1]
+            stop = event[2]
+            events.append(dict(ph="X", pid=1, tid=thread_id, ts=start, dur=stop-start, name=event[0], args={}))
     s = state.profiles[0].timestamp
     for p in state.profiles:
         ts = (p.timestamp - s) * 0.001
@@ -80,7 +81,7 @@ def export_json(log, state, fn):
         # the process was blocked
         # XXX find a way to trace system calls somehow?
         # {"name": "OutOfMemory", "ph": "i", "ts": 1234523.3, "pid": 2343, "tid": 2347, "s": "g"}
-        events.append(dict(ph="i", pid=1, tid="sample", ts=ts, name="sample"))
+        events.append(dict(ph="i", pid=1, tid=p.threadid, ts=ts, name="sample"))
 
         # 3. Add a counter event to show memory usage, if we have it
         # {..., "name": "ctr", "ph": "C", "ts":  0, "args": {"cats":  0}},
@@ -89,8 +90,18 @@ def export_json(log, state, fn):
     with open(fn, "w") as f:
         json.dump(result, f)
 
+def separate_threads(profiles):
+    from collections import defaultdict
+    d = defaultdict(list)
+    for sample in profiles:
+        d[sample.threadid].append(sample)
+    return d
 
 def write_chrome_tracing_file(stats, filename):
-    output = coalesce(stats.profiles, factor=0.001, skew=1)
-    o = [(stats._get_name(a), start, stop) for (a, start, stop) in output]
-    export_json(o, stats, filename)
+    thread_to_sample = separate_threads(stats.profiles)
+    thread_to_chart = {}
+    for threadid, samples in thread_to_sample.items():
+        output = coalesce(samples, factor=0.001, skew=1)
+        o = [(str(stats._get_name(a)), start, stop) for (a, start, stop) in output]
+        thread_to_chart[threadid] = o
+    export_json(thread_to_chart, stats, filename)
