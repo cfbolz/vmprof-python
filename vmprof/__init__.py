@@ -62,8 +62,9 @@ if IS_PYPY:
             raise ValueError("You need to pass a float as an argument")
         if warn and pypy_version_info < (4, 1, 0):
             raise Exception("PyPy <4.1 have various kinds of bugs, pass warn=False if you know what you're doing")
-        if warn and memory:
+        if warn and memory and pypy_version_info <= (7, 1, 0):
             print("Memory profiling is currently unsupported for PyPy. Running without memory statistics.")
+            memory = False
         if warn and lines:
             print('Line profiling is currently unsupported for PyPy. Running without lines statistics.\n')
         native = _is_native_enabled(native)
